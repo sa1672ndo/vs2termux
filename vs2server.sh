@@ -108,8 +108,9 @@ forge )
 	rm run.sh
 	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/user_jvm_args.txt
 	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/run.sh
-	sh.start.sh
+	sh run.sh
 	echo "eula=true" > $HOME/vs2server/eula.txt
+	sh run.sh
     ;;
 esac
 
