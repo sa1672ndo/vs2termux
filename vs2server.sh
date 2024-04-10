@@ -80,7 +80,7 @@ echo "Installing needed termux packages"
 pkg update
 pkg upgrade -y
 pkg install glibc-repo -y
-pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf bc -y
+pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf bc openjdk-17 -y
 mkdir "$HOME"/vs2server/runtimes
 #this shit is broken, so i disabled it. 
 
@@ -102,7 +102,7 @@ fabric )
 	grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar -Xmx2G $HOME/vs2server/jar nogui
         ;;
 forge )
-    grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar $HOME/vs2server/forge-"$2"-"$3"-installer.jar --installServer
+    	java -jar $HOME/vs2server/forge-"$2"-"$3"-installer.jar --installServer
 	echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
 # They can take any number, followed by an M or a G.
 # M means Megabyte, G means Gigabyte.
