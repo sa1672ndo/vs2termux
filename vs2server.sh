@@ -99,26 +99,17 @@ case $1 in
 fabric )
 	grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar $HOME/vs2server/jar nogui
 	echo "eula=true" > $HOME/vs2server/eula.txt
-	grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar -Xmx2G $HOME/vs2server/jar nogui
+	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/start.sh
+	sh start.sh
         ;;
 forge )
     	java -jar $HOME/vs2server/forge-"$2"-"$3"-installer.jar --installServer
-	echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
-# They can take any number, followed by an M or a G.
-# M means Megabyte, G means Gigabyte.
-# For example, to set the maximum to 3GB: -Xmx3G
-# To set the minimum to 2.5GB: -Xms2500M
-
-# A good default for a modded server is 4GB.
-# Uncomment the next line to set it.
--Xmx2G -Djava.library.path=$HOME/vs2server/runtimes/jdk*" > $HOME/vs2server/user_jvm_args.txt
-	echo "#!/usr/bin/env sh
-# Forge requires a configured set of both JVM and program argume#!/usr/bin/env sh
-# Forge requires a configured set of both JVM and program arguments.
-# Add custom JVM arguments to the user_jvm_args.txt
-# Add custom program arguments {such as nogui} to this file in the next line before the "$@" or
-#  pass them to this script directly 
-grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.20.1-47.2.23/unix_args.txt nogui"$@"" > run.sh
+	rm user_jvm_args.txt
+	rm run.sh
+	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/user_jvm_args.txt
+	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/run.sh
+	sh.start.sh
+	echo "eula=true" > $HOME/vs2server/eula.txt
     ;;
 esac
 
