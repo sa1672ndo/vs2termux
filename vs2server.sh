@@ -1,4 +1,7 @@
 #!/bin/bash
+SHELL=/data/data/com.termux/files/usr/bin/bash
+echo "This script should only be run in termux"
+read -n1 -r -p "Press any key to continue..."
 
 if [ "$#" -ne 3 ]; then
         echo "Usage: $0 <fabric/forge> <minecraft_version> <loader_version>"
@@ -13,6 +16,15 @@ iferror() {
         echo "Something went wrong, log saved to ~/.cache/vs2server.log"
         exit 1
     fi
+}
+install_mod(){
+name=$1
+version=$2
+loader=$3
+   url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
+   url="$(curl "$url" | jq -r '.[0].files[0].url')"
+   cd $HOME/vs2server/mods
+   wget "$url"
 }
 
 install_temurin_jdk() {
@@ -80,7 +92,7 @@ echo "Installing needed termux packages"
 pkg update
 pkg upgrade -y
 pkg install glibc-repo -y
-pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf openjdk-17 -y
+pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf openjdk-17 jq -y
 mkdir "$HOME"/vs2server/runtimes
 #this shit is broken, so i disabled it. 
 
@@ -93,6 +105,15 @@ cd "$HOME"/vs2server/runtimes/jdk*/lib || exit
 iferror
 grun -c -f ../bin/java
 iferror
+
+echo "Do you want to install Valkyrian Skies + dependencies? [Y/n]"
+read -r dc
+case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+[yY])
+        install_mod(valkyrien_skies "$2" "$1")
+        ;;
+esac
+
 cd "$HOME"/vs2server/ 
 
 case $1 in
