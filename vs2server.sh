@@ -80,14 +80,14 @@ echo "Installing needed termux packages"
 pkg update
 pkg upgrade -y
 pkg install glibc-repo -y
-pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf bc openjdk-17 -y
+pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf openjdk-17 -y
 mkdir "$HOME"/vs2server/runtimes
 #this shit is broken, so i disabled it. 
 
 #if (( "$(echo '$2 > 1.20' | bc -l)" )); then
-#	install_temurin_jdk 21
+	install_temurin_jdk 21
 #else
-    install_temurin_jdk 17
+#    install_temurin_jdk 17
 #fi 
 cd "$HOME"/vs2server/runtimes/jdk*/lib || exit
 iferror
