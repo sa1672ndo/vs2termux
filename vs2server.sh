@@ -36,7 +36,9 @@ fi
 if [ ! -d "$HOME"/vs2server/logs ]; then
 	mkdir "$HOME"/vs2server/logs
 fi
+) 2>&1 | tee "$HOME"/vs2server/logs/vs2server-startup.log
 clear
+(
 while true; do
 	echo "select a task:"
 	echo "server_installer; runtime_installer; export/import_world"
