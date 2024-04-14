@@ -16,6 +16,7 @@ if version_gt "1.16.5" "$2"; then
 	echo "If you want to host old minecraft server on ur phone, use any other script or set it up manually urself."
 	exit
 fi
+pkg install jq -y
 loader="$1"
 version="$2"
 url="https://api.modrinth.com/v2/project/valkyrien-skies/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
