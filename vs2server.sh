@@ -5,6 +5,32 @@ SHELL=/data/data/com.termux/files/usr/bin/bash
 echo "This script should only be run in termux"
 read -n1 -r -p "Press any key to continue..."
 
+if [ "$#" -ne 3 ]; then
+        echo "Usage: $0 <fabric/forge> <minecraft_version> <loader_version>"
+        echo "Example: $0 fabric 1.20.4 0.15.9"
+        exit 1
+fi
+
+
+rm "$HOME"/.cache/vs2server.log
+iferror() {
+    if [ "$?" -ne 0 ]; then
+        echo "Something went wrong, log saved to ~/.cache/vs2server.log"
+        exit 1
+    fi
+}
+
+install_temurin_jdk() {
+ 	version=$1
+ 	arch=aarch64
+ 	echo "Downloading Temurin JDK $version for $arch..."
+	wget -P "$HOME"/vs2server/runtimes/ https://api.adoptium.net/v3/binary/latest/$version/ga/linux/aarch64/jre/hotspot/normal/eclipse
+	iferror
+ 	echo "Extracting..."
+ 	tar -xzf $HOME/vs2server/runtimes/* -C "$HOME"/vs2server/runtimes/
+}
+
+# ------------------------------------------------------------------------- #
 pkg install procps coreutils -y
 if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 5 ]; then
         echo "Your phone stinks, it might die if you continue with $(free --giga | awk '/Mem:/ {print $2}')GB of useable RAM. Continue? [Y/n]"
@@ -19,93 +45,74 @@ if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 5 ]; then
             ;;
         esac
 fi
+# ------------------------------------------------------------------------- #
+
+(
+echo Installing Minecraft "$2" "$1"-"$3"
+
+if [ -d "$HOME"/vs2server ]; then
+	echo "It seems you already ran this script before. Proceeding will delete all worlds, configs, and mods. Continue? [Y/n]"
+	read -r dc
+        case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+ 	[yY])
+        	echo "Deleting vs2server folder"
+		rm -rf "$HOME"/vs2server
+		mkdir "$HOME"/vs2server
+        	;;
+        *)
+        	echo "Cancelled."
+        	exit 1
+        	;;
+        esac
+fi
+
+case $1 in
+fabric )
+        wget -P "$HOME"/vs2server/ https://meta.fabricmc.net/v2/versions/loader/"$2"/"$3"/1.0.0/server/jar
+	iferror
+        jarfile=fabric-server-mc."$2"-loader."$3"-launcher.1.0.0
+        ;;
+forge )
+        wget -P "$HOME"/vs2server/ https://maven.minecraftforge.net/net/minecraftforge/forge/"$2"-"$3"/forge-"$2"-"$3"-installer.jar
+	iferror
+        jarfile=forge-"$2"-"$3"-installer
+        ;;
+* )
+        echo "Invalid Mod Loader, use fabric or forge"
+esac
+
 echo "Installing needed termux packages"
 pkg update -y
 pkg upgrade -y
 pkg install glibc-repo -y
-pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf openjdk-17 jq -y
-if [ ! -d "$HOME"/vs2server ]; then
-	mkdir "$HOME"/vs2server
-fi
-if [ ! -d "$HOME"/vs2server/configs ]; then
-	mkdir "$HOME"/vs2server/configs
-fi
-if [ ! -d "$HOME"/vs2server/scripts ]; then
-	mkdir "$HOME"/vs2server/script
-fi
-if [ ! -d "$HOME"/vs2server/logs ]; then
-	mkdir "$HOME"/vs2server/logs
-fi
-) 2>&1 | tee "$HOME"/vs2server/logs/vs2server-startup.log
-clear
-(
-while true; do
-	echo "select a task:"
-	echo "server_installer; runtime_installer; export/import_world"
-	echo "mod_manager; config_editor; export_logs; exit; unistall"
-	read -r dc
-	case "$dc" in
-	"server_installer")
-		#installer done, now make unistaller and add it to this script.
-		#too tired to implement multi instance support, just overwrite the existing instances with a new one.
-		read -p "Enter the loader name: " loader
-		read -p "Enter the minecraft version: " mcver
-		read -p "Enter the loader version: " loader_ver
-		bash server_installer.sh "$loader" "$mcver" "$loader_ver"
-		;;
-	"runtime_installer")
-		#installer done, now make unistaller and add it to this script
-		#too tired to implement multi runtime support, just overwrite the existing runtime with a new one.
-		read -p "Enter the java version: " java
-		read -p "Enter the package type <jdk/jre>): " package
-        bash runtime_installer.sh $java $package
-		;;
-	"world_manager")
-		#copy world folder to storage or copy world folder from storage and overwrite the current one
-		echo "not implemented"
-		;;
-	"mod_manager")
-		echo "select a task"
-		read -p "install; uninstall " task
-		if [ "$task" = "install" ]; then
-			bash mod_manager.sh -i
-		elif [ "$task" = "uninstall" ]; then
-			bash mod_manager.sh -d
-		fi
-		;;
-	"config_editor")
-		#add file explorer and allow user to nano selected file if it exists.
-		echo "not implemented"
-		;;
-	"export_logs")
-		if [ ! -d "$HOME"/storage ]; then
-			termux-setup-storage
-		fi
-		cd "$HOME"/vs2server
-        tar -cJf logs.tar.xz logs
-        mv logs.tar.xz "$HOME"/storage/downloads
-		echo "All of the logs have been copied to your downloads folder"
-		;;
-	"unistall")
-		echo "Are you sure that you want to unistall vs2termux and all of it's files? [Y/n]"
-		read -r dc
-		case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
-		[yY])
-			rm -rf ~/vs2server
-			rm vs2server.sh
-			exit
-			;;
-	"exit")
-		exit
-		;;
-		*)
-			;;
-		esac
-		;;
-	*)
-		echo "Unreconized task: $dc"
-		;;
-	esac
-done
+pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf openjdk-17 -y
+mkdir "$HOME"/vs2server/runtimes
 
-) 2>&1 | tee "$HOME"/vs2server/logs/vs2server.log
+install_temurin_jdk 21
+
+cd "$HOME"/vs2server/runtimes/jdk*/lib || exit
+iferror
+grun -c -f ../bin/java
+iferror
+cd "$HOME"/vs2server/ 
+
+case $1 in
+fabric )
+	grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar $HOME/vs2server/jar nogui
+	echo "eula=true" > $HOME/vs2server/eula.txt
+	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/start.sh
+	sh start.sh
+        ;;
+forge )
+    	java -jar $HOME/vs2server/forge-"$2"-"$3"-installer.jar --installServer
+	rm user_jvm_args.txt
+	rm run.sh
+	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/user_jvm_args.txt
+	wget https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/run.sh
+	sh run.sh
+	echo "eula=true" > $HOME/vs2server/eula.txt
+	sh run.sh
+    ;;
+esac
+
+) 2>&1 | tee ~/.cache/vs2server.log
