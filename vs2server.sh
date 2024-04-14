@@ -226,10 +226,10 @@ case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	cd "$HOME"/
 	echo "cd "$HOME"/vs2server/instances/ 
 sh start.sh" > start.sh
-	echo "To run the server, run "sh start.sh""
+	echo "To run the server, run 'sh start.sh'"
 	;;
 *)
-	echo "To run the server, go to "$pwd" and run "sh start.sh""
+	echo "To run the server, go to "$pwd" and run 'sh start.sh'"
 esac
 
 ) 2>&1 | tee "$HOME"/.cache/vs2server.log
