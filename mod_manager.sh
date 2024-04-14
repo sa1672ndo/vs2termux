@@ -82,14 +82,12 @@ remove_mod(){
 }
 
 
-
-
 if [ "$1" = "-i" ]; then
 	if [ "$#" -eq 1 ]; then
 		# mod installer cli
 		while true; do
-			loader=$(cat $HOME/vs2server/configs/loader.txt)
-			version=$(cat $HOME/vs2server/configs/mcver.txt)
+			loader=$(cat $HOME/vs2server/instances/loader.txt)
+			version=$(cat $HOME/vs2server/instances/mcver.txt)
 			read -p "Enter the name of the mod you want to install from modrinth (or type 'return' to return): " name
 			if [ $name = "return" ]; then
 				exit
