@@ -216,9 +216,20 @@ case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	install_mod "$1" "$2" "eureka"
 	;;
 esac
-cd ~/vs2server/instances/
+cd "$HOME"/vs2server/instances/
 sh start.sh
 pwd=$(pwd)
 echo "server files are located in "$pwd""
+read -p "Do you want to make a start script in your home directory? [Y/n] " dc
+case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+[yY])
+	cd "$HOME"/
+	echo "cd "$HOME"/vs2server/instances/ 
+sh start.sh" > start.sh
+	echo "To run the server, run "sh start.sh""
+	;;
+*)
+	echo "To run the server, go to "$pwd" and run "sh start.sh""
+esac
 
-) 2>&1 | tee ~/.cache/vs2server.log
+) 2>&1 | tee "$HOME"/.cache/vs2server.log
