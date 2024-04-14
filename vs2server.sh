@@ -211,10 +211,11 @@ forge )
 	echo "eula=true" > $HOME/vs2server/instances/eula.txt
     ;;
 esac
-read -p "Do you want to install Valkyrian Skies and Eureka? [Y/n] " dc
+read -p "Do you want to install Valkyrian Skies, Clockwork and Eureka? [Y/n] " dc
 case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 [yY])
 	install_mod "$1" "$2" "eureka"
+	install_mod "$1" "$2" "create-clockwork"
 	;;
 esac
 cd "$HOME"/vs2server/instances/
@@ -232,5 +233,26 @@ sh start.sh" > start.sh
 *)
 	echo "To run the server, go to "$pwd" and run 'sh start.sh'"
 esac
+cd ~
+if [ ! -d "$HOME"/storage/shared/vs2termux ]; then
+	mkdir "$HOME"/storage/shared/vs2termux
+fi
+if [ ! -d "$HOME"/storage/shared/vs2termux/mods ]; then
+	mkdir "$HOME"/storage/shared/vs2termux/mods
+fi
+cd ~/storage/shared/vs2termux
+if [ ! -f "~/storage/shared/vs2termux/copy_mod_to_server.txt" ]; then
+	echo "Folder for importing mods from the internal storage to the server. 
+Add mods to the 'mods' folder and run 'sh import_mods.sh' in termux to copy it to the server." > copy_mod_to_server.txt
+fi
+if [ ! -f "~/storage/shared/vs2termux/run_server.txt" ]; then
+	echo "To run the server, run 'sh start.sh' if u made the script in the home folder.
+Run 'cd ~/vs2server/instances/ && sh start.sh' if u did not made the script in the home folder." > run_server.txt
+fi
+cd ~/
+if [ ! -f "~/import_mods.sh" ]; then
+	echo "cp -r storage/shared/vs2termux/mods "$HOME"/vs2server/instances/" > import_mods.sh
+fi
+echo "Check 'internal storage/vs2termux/' folder for some information that u might find useful."
 
 ) 2>&1 | tee "$HOME"/.cache/vs2server.log
