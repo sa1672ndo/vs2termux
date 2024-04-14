@@ -11,6 +11,22 @@ if [ "$#" -ne 3 ]; then
         exit 1
 fi
 
+#check if mc ver is not below 1.16.5
+version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+if version_gt "1.16.5" "$2"; then
+    echo "Warning: This script was designed to run minecraft 1.16.5>."
+	echo "Older versions of minecraft WONT RUN because they only support java 16 or older, NOT java 21 which is automatically installed."
+	echo "If you want to host old minecraft server on ur phone, use any other script or set it up manually urself."
+	exit
+fi
+url="https://api.modrinth.com/v2/project/valkyrien-skies/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
+check="$(curl -s "$url" | jq '.[0]')"
+if [ -n "$check" ] && [ "$check" != "null" ]; then
+	mods=true
+else
+	echo "Warning: This script was designed to run a minecraft server with valkyrien skies 2 installed, which isn't available for minecraft "$version"."
+	exit
+fi
 iferror() {
     if [ "$?" -ne 0 ]; then
         echo "Something went wrong, log saved to ~/.cache/vs2server.log"
@@ -167,15 +183,14 @@ forge )
 	sh run.sh
     ;;
 esac
-while true; do
-	read -p "Do you want to install Valkyrian Skies and Eureka? [Y/n]" dc
-	case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
-	[yY])
-		install_mod "$1" "$2" "eureka"
-		;;
-	*)
-		exit
-		;;
-	esac
-done
+read -p "Do you want to install Valkyrian Skies and Eureka? [Y/n]" dc
+case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+[yY])
+	install_mod "$1" "$2" "eureka"
+	;;
+*)
+	exit
+	;;
+esac
+
 ) 2>&1 | tee ~/.cache/vs2server.log
