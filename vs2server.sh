@@ -58,7 +58,50 @@ echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
 # Uncomment the next line to set it.
 -Xmx2G -Djava.library.path=$HOME/vs2server/runtimes/jdk*" > user_jvm_args.txt
 }
+remove_mod(){
+cat << 'EOF' > mod_remover.sh
+#!/bin/bash
 
+name=$1
+if [ -n "$name" ]; then
+    cd $HOME/vs2server/instances/mods
+    if [ -e "$name" ]; then
+        rm "$name"
+        exit
+    else
+        echo "File '$name' does not exist."
+        exit
+    fi
+else
+    while true; do
+        clear
+        cd $HOME/vs2server/instances/mods
+        ls
+        read -p "Enter the name of the file you want to delete (or type 'return' to return): " name
+        if [ "$name" = "return" ]; then
+            echo "Exiting script..."
+            break
+        elif [ -e "$name" ]; then
+            echo "Are you sure that you want to delete '$name'? [Y/n]"
+            read -r dc
+            case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+                [yY])
+                    rm "$name"
+                    echo "File '$name' deleted."
+                    ;;
+                *)
+                    echo "Cancelled."
+                    exit 1
+                    ;;
+            esac
+        else
+            echo "File '$name' does not exist. Please try again."
+            sleep 3
+        fi
+    done
+fi
+EOF
+}
 install_temurin_jdk() {
      version=$1
      #package=$2
@@ -71,7 +114,6 @@ install_temurin_jdk() {
      tar -xzf $HOME/vs2server/runtimes/eclipse -C "$HOME"/vs2server/runtimes/
     rm $HOME/vs2server/runtimes/eclipse
 }
-
 check_dep(){
 	if [ "$#" -ne 3 ]; then
 		echo "invalid arguments"
@@ -103,16 +145,24 @@ fi
 	name=$3
 	url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
 	dlink="$(curl -s "$url" | jq -r '.[0].files[0].url')"
+	fname="$(curl -s "$url" | jq -r '.[0].files[0].filename')"
 	if [ ! -d "$HOME"/vs2server/instances/mods ]; then
 		mkdir $HOME/vs2server/instances/mods
 	fi
-	cd $HOME/vs2server/instances/mods
-	wget "$dlink"
+	if [ -f "$HOME"/vs2server/instances/mods/"$fname" ]; then
+        echo "Mod $fname already downloaded"
+    else
+        wget -P "$HOME"/vs2server/instances/mods "$dlink"
+    fi
 	check_dep "$loader" "$version" "$name"
-	
 }
 # ------------------------------------------------------------------------- #
-pkg install procps coreutils -y
+echo "Installing needed termux packages"
+pkg update -y
+pkg upgrade -y
+pkg install glibc-repo -y
+pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf procps -y
+
 if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 5 ]; then
         echo "Your phone stinks, it might die if you continue with $(free --giga | awk '/Mem:/ {print $2}')GB of useable RAM. Continue? [Y/n]"
         read -r dc
@@ -130,42 +180,6 @@ fi
 
 (
 echo Installing Minecraft "$2" "$1"-"$3"
-
-if [ -d "$HOME"/vs2server/instances ]; then
-	echo "It seems you already ran this script before. Proceeding will delete all worlds, configs, and mods. Continue? [Y/n]"
-	read -r dc
-        case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
- 	[yY])
-        echo "Deleting vs2server folder"
-		rm -rf "$HOME"/vs2server/instances
-        	;;
-        *)
-        	echo "Cancelled."
-        	exit 1
-        	;;
-        esac
-fi
-mkdir "$HOME"/vs2server/instances
-case $1 in
-fabric )
-        wget -P "$HOME"/vs2server/instances https://meta.fabricmc.net/v2/versions/loader/"$2"/"$3"/1.0.0/server/jar
-	iferror
-        jarfile=fabric-server-mc."$2"-loader."$3"-launcher.1.0.0
-        ;;
-forge )
-        wget -P "$HOME"/vs2server/instances https://maven.minecraftforge.net/net/minecraftforge/forge/"$2"-"$3"/forge-"$2"-"$3"-installer.jar
-	iferror
-        jarfile=forge-"$2"-"$3"-installer
-        ;;
-* )
-        echo "Invalid Mod Loader, use fabric or forge"
-esac
-
-echo "Installing needed termux packages"
-pkg update -y
-pkg upgrade -y
-pkg install glibc-repo -y
-pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf -y
 
 if [ "$1" = "forge" ]; then
 	if command -v java >/dev/null 2>&1; then
@@ -196,21 +210,51 @@ cd "$HOME"/vs2server/runtimes/jdk*/lib || exit
 iferror
 grun -c -f ../bin/java
 iferror
+
+install=true
+if [ -d "$HOME"/vs2server/instances ]; then
+	echo "Another instance already exists. Proceeding will overwrite it which will delete all worlds, configs, and mods. Continue? [Y/n] "
+	read -r dc
+    case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+	[yY])
+		echo "Deleting vs2server folder"
+		rm -rf "$HOME"/vs2server/instances
+        	;;
+        *)
+        echo "Cancelled."
+		install=false
+        ;;
+    esac
+elif [ ! -d "$HOME"/vs2server/instances ]; then
+	mkdir "$HOME"/vs2server/instances
+fi
+if [ "$install" = "true" ]; then
+	case $1 in
+	fabric )
+        wget -P "$HOME"/vs2server/instances https://meta.fabricmc.net/v2/versions/loader/"$2"/"$3"/1.0.0/server/jar
+		iferror
+		jarfile=fabric-server-mc."$2"-loader."$3"-launcher.1.0.0
+		grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar $HOME/vs2server/instances/jar nogui
+		start_script_fabric
+		echo "eula=true" > $HOME/vs2server/instances/eula.txt
+		;;
+	forge )
+        wget -P "$HOME"/vs2server/instances https://maven.minecraftforge.net/net/minecraftforge/forge/"$2"-"$3"/forge-"$2"-"$3"-installer.jar
+		iferror
+        jarfile=forge-"$2"-"$3"-installer
+		java -jar $HOME/vs2server/instances/forge-"$2"-"$3"-installer.jar --installServer
+		rm run.sh
+		start_script_forge
+		echo "eula=true" > $HOME/vs2server/instances/eula.txt
+		;;
+	* )
+        echo "Invalid Mod Loader, use fabric or forge"
+		;;
+	esac
+fi
+
 cd "$HOME"/vs2server/instances
 
-case $1 in
-fabric )
-	grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java -Djava.library.path=$HOME/vs2server/runtimes/jdk* -jar $HOME/vs2server/instances/jar nogui
-	start_script_fabric
-	echo "eula=true" > $HOME/vs2server/instances/eula.txt
-    ;;
-forge )
-    java -jar $HOME/vs2server/instances/forge-"$2"-"$3"-installer.jar --installServer
-	rm run.sh
-	start_script_forge
-	echo "eula=true" > $HOME/vs2server/instances/eula.txt
-    ;;
-esac
 read -p "Do you want to install Valkyrian Skies, Clockwork and Eureka? [Y/n] " dc
 case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 [yY])
@@ -219,26 +263,42 @@ case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	;;
 esac
 cd "$HOME"/vs2server/instances/
-sh start.sh
 pwd=$(pwd)
 echo "server files are located in "$pwd""
-read -p "Do you want to make a start script in your home directory? [Y/n] " dc
-case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
-[yY])
-	cd "$HOME"/
-	echo "cd "$HOME"/vs2server/instances/ 
+cd ~/
+if [ ! -f "start.sh" ]; then
+	read -p "Do you want to make a start script in your home directory? [Y/n] " dc
+	case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+	[yY])
+		echo "cd "$HOME"/vs2server/instances/ 
 sh start.sh" > start.sh
-	echo "To run the server, run 'sh start.sh'"
-	;;
-*)
-	echo "To run the server, go to "$pwd" and run 'sh start.sh'"
-esac
-cd ~
+		echo "To run the server, run 'sh start.sh'"
+		;;
+	*)
+		echo "To run the server, go to "$pwd" and run 'sh start.sh'"
+	esac
+fi
+if [ ! -f "~/import_mods.sh" ]; then
+	echo "cp -r storage/shared/vs2termux/mods "$HOME"/vs2server/instances/" > import_mods.sh
+fi
+if [ ! -f "~/mod_remover.sh" ]; then
+	remove_mod
+fi
+if [ ! -d "$HOME"/storage/shared ]; then
+	termux-setup-storage
+fi
 if [ ! -d "$HOME"/storage/shared/vs2termux ]; then
 	mkdir "$HOME"/storage/shared/vs2termux
 fi
 if [ ! -d "$HOME"/storage/shared/vs2termux/mods ]; then
 	mkdir "$HOME"/storage/shared/vs2termux/mods
+fi
+if [ -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
+	rm -rf "$HOME"/storage/shared/vs2termux/exported_mods
+fi
+if [ ! -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
+	mkdir "$HOME"/storage/shared/vs2termux/exported_mods
+	cp -R "$HOME"/vs2server/instances/mods "$HOME"/storage/shared/vs2termux/exported_mods/ 
 fi
 cd ~/storage/shared/vs2termux
 if [ ! -f "~/storage/shared/vs2termux/copy_mod_to_server.txt" ]; then
@@ -247,11 +307,17 @@ Add mods to the 'mods' folder and run 'sh import_mods.sh' in termux to copy it t
 fi
 if [ ! -f "~/storage/shared/vs2termux/run_server.txt" ]; then
 	echo "To run the server, run 'sh start.sh' if u made the script in the home folder.
-Run 'cd ~/vs2server/instances/ && sh start.sh' if u did not made the script in the home folder." > run_server.txt
+Run 'cd ~/vs2server/instances/ && sh start.sh' if u did not made the script in the home folder.
+To join the server, enter 'localhost' if ur trying to join the server from the same device as ur hosting it.
+If you want someone else to join from outside of ur local network, u will need to 'port foward' the server.
+Theres shit ton of guides on how to do that online. " > run_server.txt
 fi
-cd ~/
-if [ ! -f "~/import_mods.sh" ]; then
-	echo "cp -r storage/shared/vs2termux/mods "$HOME"/vs2server/instances/" > import_mods.sh
+if [ ! -f "~/storage/shared/vs2termux/mod_remover.txt" ]; then
+	echo "Run 'sh mod_remover.sh' to open mod removing Command Line Interface" > mod_remover.txt
+fi
+if [ ! -f "~/storage/shared/vs2termux/exported_mods.txt" ]; then
+	echo "'exported_mods' folder contains the mods that the server has downloaded automatically.
+U need to copy them to ur clients mods folder so u could join the server" > exported_mods.txt
 fi
 echo "Check 'internal storage/vs2termux/' folder for some information that u might find useful."
 
