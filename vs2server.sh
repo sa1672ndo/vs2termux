@@ -22,8 +22,9 @@ version="$2"
 url="https://api.modrinth.com/v2/project/valkyrien-skies/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
 check="$(curl -s "$url" | jq '.[0]')"
 if [ -n "$check" ] && [ "$check" != "null" ]; then
-	mods=true
+	echo "VS2 is available for this version of minecraft"
 else
+	clear
 	echo "Warning: This script was designed to run a minecraft server with valkyrien skies 2 installed, which isn't available for minecraft "$version"."
 	exit
 fi
@@ -37,7 +38,7 @@ start_script_fabric() {
 JAVA_HOME=$HOME/vs2server/runtimes/jdk*
 echo "JAVA_HOME=$HOME/vs2server/runtimes/jdk*
 SHELL=/data/data/com.termux/files/usr/bin/bash
-grun -s $JAVA_HOME/bin/java -Djava.library.path=$JAVA_HOME/lib -Xmx2G -jar $HOME/vs2server/instances/jar" > start.sh
+grun -s $JAVA_HOME/bin/java -Djava.library.path=$JAVA_HOME/lib -Xmx2G -jar $HOME/vs2server/instances/jar" > "$HOME"/vs2server/instances/start.sh
 }
 start_script_forge(){
 JAVA_HOME=$HOME/vs2server/runtimes/jdk*
@@ -47,7 +48,7 @@ echo "#!/usr/bin/env sh
 # Add custom JVM arguments to the user_jvm_args.txt
 # Add custom program arguments {such as nogui} to this file in the next line before the "$@" or
 #  pass them to this script directly 
-grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.20.1-47.2.23/unix_args.txt nogui"$@"" > start.sh
+grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.20.1-47.2.23/unix_args.txt nogui"$@"" > "$HOME"/vs2server/instances/start.sh
 echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
 # They can take any number, followed by an M or a G.
 # M means Megabyte, G means Gigabyte.
@@ -56,7 +57,7 @@ echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
 
 # A good default for a modded server is 4GB.
 # Uncomment the next line to set it.
--Xmx2G -Djava.library.path=$HOME/vs2server/runtimes/jdk*" > user_jvm_args.txt
+-Xmx2G -Djava.library.path=$HOME/vs2server/runtimes/jdk*" > "$HOME"/vs2server/instances/user_jvm_args.txt
 }
 remove_mod(){
 cat << 'EOF' > mod_remover.sh
@@ -91,7 +92,7 @@ else
                     ;;
                 *)
                     echo "Cancelled."
-                    exit 1
+					sleep 1
                     ;;
             esac
         else
@@ -114,48 +115,59 @@ install_temurin_jdk() {
      tar -xzf $HOME/vs2server/runtimes/eclipse -C "$HOME"/vs2server/runtimes/
     rm $HOME/vs2server/runtimes/eclipse
 }
-check_dep(){
-	if [ "$#" -ne 3 ]; then
-		echo "invalid arguments"
-		exit 1
-	fi
-	loader=$1
-	version=$2
-	name=$3
-	url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
-	i=0
-	while [ "$i" -le 4 ]
-	do
-		url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
-		command='jq -r ".[0].dependencies["$i"] | select(.dependency_type == \"required\") | .project_id"'
-		id=$(curl -s "$url" | eval "$command")
-		if [ -n "$id" ]; then
-			install_mod "$1" "$2" "$id"
-		fi
-		i=$((i + 1)) 
-	done
-}
-install_mod(){
-if [ "$#" -ne 3 ]; then
+
+check_dep() {
+    if [ "$#" -ne 3 ]; then
         echo "invalid arguments"
         exit 1
-fi
-	loader=$1
-	version=$2
-	name=$3
-	url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
-	dlink="$(curl -s "$url" | jq -r '.[0].files[0].url')"
-	fname="$(curl -s "$url" | jq -r '.[0].files[0].filename')"
-	if [ ! -d "$HOME"/vs2server/instances/mods ]; then
-		mkdir $HOME/vs2server/instances/mods
-	fi
-	if [ -f "$HOME"/vs2server/instances/mods/"$fname" ]; then
+    fi
+
+    loader=$1
+    version=$2
+    name=$3
+    url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
+
+    while true; do
+        url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
+        command='jq -r ".[0].dependencies[] | select(.dependency_type == \"required\") | .project_id"'
+        dependencies=$(curl -s "$url" | eval "$command")
+
+        if [ -n "$dependencies" ]; then
+            for dep_id in $dependencies; do
+                install_mod "$loader" "$version" "$dep_id"
+            done
+        else
+            break
+        fi
+    done
+}
+
+install_mod() {
+    if [ "$#" -ne 3 ]; then
+        echo "invalid arguments"
+        exit 1
+    fi
+
+    loader=$1
+    version=$2
+    name=$3
+    url="https://api.modrinth.com/v2/project/"$name"/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
+    dlink=$(curl -s "$url" | jq -r '.[0].files[0].url')
+    fname=$(curl -s "$url" | jq -r '.[0].files[0].filename')
+
+    if [ ! -d "$HOME/vs2server/instances/mods" ]; then
+        mkdir -p "$HOME/vs2server/instances/mods"
+    fi
+
+    if [ -f "$HOME/vs2server/instances/mods/$fname" ]; then
         echo "Mod $fname already downloaded"
     else
-        wget -P "$HOME"/vs2server/instances/mods "$dlink"
+        wget -P "$HOME/vs2server/instances/mods" "$dlink"
     fi
-	check_dep "$loader" "$version" "$name"
+
+    check_dep "$loader" "$version" "$name"
 }
+
 # ------------------------------------------------------------------------- #
 echo "Installing needed termux packages"
 pkg update -y
@@ -203,7 +215,7 @@ if [ -d "$HOME"/vs2server/runtimes ]; then
         	;;
         esac
 elif [ ! -d "$HOME"/vs2server/runtimes ]; then
-	mkdir "$HOME"/vs2server/runtimes/
+	mkdir -p "$HOME"/vs2server/runtimes/
 	install_temurin_jdk 21
 fi
 cd "$HOME"/vs2server/runtimes/jdk*/lib || exit
@@ -225,9 +237,11 @@ if [ -d "$HOME"/vs2server/instances ]; then
 		install=false
         ;;
     esac
-elif [ ! -d "$HOME"/vs2server/instances ]; then
-	mkdir "$HOME"/vs2server/instances
 fi
+if [ ! -d "$HOME"/vs2server/instances ]; then
+	mkdir -p "$HOME"/vs2server/instances
+fi
+cd "$HOME"/vs2server/instances
 if [ "$install" = "true" ]; then
 	case $1 in
 	fabric )
@@ -253,8 +267,6 @@ if [ "$install" = "true" ]; then
 	esac
 fi
 
-cd "$HOME"/vs2server/instances
-
 read -p "Do you want to install Valkyrian Skies, Clockwork and Eureka? [Y/n] " dc
 case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 [yY])
@@ -266,7 +278,7 @@ cd "$HOME"/vs2server/instances/
 pwd=$(pwd)
 echo "server files are located in "$pwd""
 cd ~/
-if [ ! -f "start.sh" ]; then
+if [ ! -f "~/start.sh" ]; then
 	read -p "Do you want to make a start script in your home directory? [Y/n] " dc
 	case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	[yY])
@@ -284,20 +296,29 @@ fi
 if [ ! -f "~/mod_remover.sh" ]; then
 	remove_mod
 fi
+if [ ! -f "~/unistall.sh" ]; then
+	echo "rm -rf ~/storage/shared/vs2termux
+rm -rf ~/vs2server
+rm ~/mod_remover.sh
+rm ~/import_mods.sh
+rm ~/start.sh
+rm ~/vs2server.sh
+rm ~/unistall.sh" > ~/unistall.sh
+fi
 if [ ! -d "$HOME"/storage/shared ]; then
 	termux-setup-storage
 fi
 if [ ! -d "$HOME"/storage/shared/vs2termux ]; then
-	mkdir "$HOME"/storage/shared/vs2termux
+	mkdir -p "$HOME"/storage/shared/vs2termux
 fi
 if [ ! -d "$HOME"/storage/shared/vs2termux/mods ]; then
-	mkdir "$HOME"/storage/shared/vs2termux/mods
+	mkdir -p "$HOME"/storage/shared/vs2termux/mods
 fi
 if [ -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
 	rm -rf "$HOME"/storage/shared/vs2termux/exported_mods
 fi
 if [ ! -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
-	mkdir "$HOME"/storage/shared/vs2termux/exported_mods
+	mkdir -p "$HOME"/storage/shared/vs2termux/exported_mods
 	cp -R "$HOME"/vs2server/instances/mods "$HOME"/storage/shared/vs2termux/exported_mods/ 
 fi
 cd ~/storage/shared/vs2termux
@@ -318,6 +339,9 @@ fi
 if [ ! -f "~/storage/shared/vs2termux/exported_mods.txt" ]; then
 	echo "'exported_mods' folder contains the mods that the server has downloaded automatically.
 U need to copy them to ur clients mods folder so u could join the server" > exported_mods.txt
+fi
+if [ ! -f "~/storage/shared/vs2termux/exported_mods.txt" ]; then
+	echo "run 'unistall.sh' to remove vs2termux from ur phone" > unistall.txt
 fi
 echo "Check 'internal storage/vs2termux/' folder for some information that u might find useful."
 
