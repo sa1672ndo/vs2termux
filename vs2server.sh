@@ -59,13 +59,13 @@ echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
 # Uncomment the next line to set it.
 -Xmx2G -Djava.library.path=$HOME/vs2server/runtimes/jdk*" > "$HOME"/vs2server/instances/user_jvm_args.txt
 }
-remove_mod(){
-cat << 'EOF' > mod_remover.sh
+remove_mods(){
+cat << 'EOF' > remove_mods.sh
 #!/bin/bash
 
 name=$1
 if [ -n "$name" ]; then
-    cd $HOME/vs2server/instances/mods
+    cd "$HOME/vs2server/instances/mods" || exit
     if [ -e "$name" ]; then
         rm "$name"
         exit
@@ -76,9 +76,10 @@ if [ -n "$name" ]; then
 else
     while true; do
         clear
-        cd $HOME/vs2server/instances/mods
+        cd "$HOME/vs2server/instances/mods" || exit
         ls
-        read -p "Enter the name of the file you want to delete (or type 'return' to return): " name
+        echo "Enter the name of the file you want to delete (or type 'return' to return): "
+        read -r name
         if [ "$name" = "return" ]; then
             echo "Exiting script..."
             break
@@ -92,7 +93,22 @@ else
                     ;;
                 *)
                     echo "Cancelled."
-					sleep 1
+                    sleep 1
+                    ;;
+            esac
+        elif [ -n "$(ls | grep "$name")" ]; then
+            # Autocomplete based on partial match
+            autocomplete=$(ls | grep "$name" | head -n 1)
+            echo "Are you sure that you want to delete '$autocomplete'? [Y/n]"
+            read -r dc
+            case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
+                [yY])
+                    rm "$autocomplete"
+                    echo "File '$autocomplete' deleted."
+                    ;;
+                *)
+                    echo "Cancelled."
+                    sleep 1
                     ;;
             esac
         else
@@ -291,15 +307,15 @@ sh start.sh" > start.sh
 	esac
 fi
 if [ ! -f "~/import_mods.sh" ]; then
-	echo "cp -r storage/shared/vs2termux/mods "$HOME"/vs2server/instances/" > import_mods.sh
+	echo "cp -r ~/storage/shared/vs2termux/import_mods/mods "$HOME"/vs2server/instances/" > import_mods.sh
 fi
-if [ ! -f "~/mod_remover.sh" ]; then
-	remove_mod
+if [ ! -f "~/remove_mods.sh" ]; then
+	remove_mods
 fi
 if [ ! -f "~/unistall.sh" ]; then
 	echo "rm -rf ~/storage/shared/vs2termux
 rm -rf ~/vs2server
-rm ~/mod_remover.sh
+rm ~/remove_mods.sh
 rm ~/import_mods.sh
 rm ~/start.sh
 rm ~/vs2server.sh
@@ -311,8 +327,12 @@ fi
 if [ ! -d "$HOME"/storage/shared/vs2termux ]; then
 	mkdir -p "$HOME"/storage/shared/vs2termux
 fi
-if [ ! -d "$HOME"/storage/shared/vs2termux/mods ]; then
-	mkdir -p "$HOME"/storage/shared/vs2termux/mods
+if [ -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
+	rm -rf "$HOME"/storage/shared/vs2termux/import_mods
+fi
+if [ ! -d "$HOME"/storage/shared/vs2termux/import_mods ]; then
+	mkdir -p "$HOME"/storage/shared/vs2termux/import_mods
+	mkdir -p "$HOME"/storage/shared/vs2termux/import_mods/mods
 fi
 if [ -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
 	rm -rf "$HOME"/storage/shared/vs2termux/exported_mods
@@ -321,10 +341,9 @@ if [ ! -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
 	mkdir -p "$HOME"/storage/shared/vs2termux/exported_mods
 	cp -R "$HOME"/vs2server/instances/mods "$HOME"/storage/shared/vs2termux/exported_mods/ 
 fi
-cd ~/storage/shared/vs2termux
+cd ~/storage/shared/vs2termux/
 if [ ! -f "~/storage/shared/vs2termux/copy_mod_to_server.txt" ]; then
-	echo "Folder for importing mods from the internal storage to the server. 
-Add mods to the 'mods' folder and run 'sh import_mods.sh' in termux to copy it to the server." > copy_mod_to_server.txt
+	echo "Add mods to the 'import_mods/mods' folder and run 'sh import_mods.sh' in termux to copy it to the server." > copy_mod_to_server.txt
 fi
 if [ ! -f "~/storage/shared/vs2termux/run_server.txt" ]; then
 	echo "To run the server, run 'sh start.sh' if u made the script in the home folder.
@@ -333,8 +352,8 @@ To join the server, enter 'localhost' if ur trying to join the server from the s
 If you want someone else to join from outside of ur local network, u will need to 'port foward' the server.
 Theres shit ton of guides on how to do that online. " > run_server.txt
 fi
-if [ ! -f "~/storage/shared/vs2termux/mod_remover.txt" ]; then
-	echo "Run 'sh mod_remover.sh' to open mod removing Command Line Interface" > mod_remover.txt
+if [ ! -f "~/storage/shared/vs2termux/remove_mods.txt" ]; then
+	echo "Run 'sh remove_mods.sh' to open mod removing Command Line Interface" > remove_mods.txt
 fi
 if [ ! -f "~/storage/shared/vs2termux/exported_mods.txt" ]; then
 	echo "'exported_mods' folder contains the mods that the server has downloaded automatically.
