@@ -16,7 +16,7 @@ if version_gt "1.16.5" "$2"; then
 	echo "If you want to host old minecraft server on ur phone, use any other script or set it up manually urself."
 	exit
 fi
-pkg install jq -y
+pkg install jq wget curl -y
 loader="$1"
 version="$2"
 url="https://api.modrinth.com/v2/project/valkyrien-skies/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
@@ -191,7 +191,8 @@ pkg upgrade -y
 pkg install glibc-repo -y
 pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf procps -y
 
-if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 5 ]; then
+#Check the code on 6gb phone 
+if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 4 ]; then
         echo "Your phone stinks, it might die if you continue with $(free --giga | awk '/Mem:/ {print $2}')GB of useable RAM. Continue? [Y/n]"
         read -r dc
         case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
