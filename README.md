@@ -1,7 +1,7 @@
 # vs2termux
-Simple script designed to install minecraft server with glibc support in termux for running Valkyrien skies 2 and it's addons on android.                  
-This script should only be run in termux and nowhere else.                                  
-Your phone must have at least 6 gb of ram if u don't want it to randomly crash and freeze.                  
+Simple script designed to install minecraft server with glibc support in termux for running Valkyrien skies 2 and it's addons on android.                                                 
+Your phone must have at least 6 gb of ram. Don't run this script on phones with less memory if u don't want it to randomly freeze and crash.                  
+This script should only be run in termux and nowhere else.                                   
 
 Tutorial on how to run this script:
 - [Install termux](https://github.com/termux/termux-app/releases/tag/v0.118.0)
