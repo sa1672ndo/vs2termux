@@ -310,6 +310,9 @@ fi
 if [ ! -f "~/import_mods.sh" ]; then
 	echo "cp -r ~/storage/shared/vs2termux/import_mods/mods "$HOME"/vs2server/instances/" > import_mods.sh
 fi
+if [ ! -f "~/export_mods.sh" ]; then
+	echo "cp -r "$HOME"/vs2server/instances/mods "$HOME"/storage/shared/vs2termux/exported_mods/" > export_mods.sh
+fi
 if [ ! -f "~/remove_mods.sh" ]; then
 	remove_mods
 fi
@@ -318,6 +321,7 @@ if [ ! -f "~/unistall.sh" ]; then
 rm -rf ~/vs2server
 rm ~/remove_mods.sh
 rm ~/import_mods.sh
+rm ~/export_mods.sh
 rm ~/start.sh
 rm ~/vs2server.sh
 rm ~/unistall.sh" > ~/unistall.sh
@@ -339,12 +343,12 @@ if [ -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
 	rm -rf "$HOME"/storage/shared/vs2termux/exported_mods
 fi
 if [ ! -d "$HOME"/storage/shared/vs2termux/exported_mods ]; then
-	mkdir -p "$HOME"/storage/shared/vs2termux/exported_mods
-	cp -R "$HOME"/vs2server/instances/mods "$HOME"/storage/shared/vs2termux/exported_mods/ 
+	mkdir -p "$HOME"/storage/shared/vs2termux/exported_mods 
 fi
 cd ~/storage/shared/vs2termux/
 if [ ! -f "~/storage/shared/vs2termux/copy_mod_to_server.txt" ]; then
-	echo "Add mods to the 'import_mods/mods' folder and run 'sh import_mods.sh' in termux to copy it to the server." > copy_mod_to_server.txt
+	echo "Add mods to the 'import_mods/mods' folder and run 'sh import_mods.sh' in termux to copy it to the server.
+Run 'sh export_mods.sh mods to copy servers mods to the 'export_mods/mods' folder." > copy_mod_to_or_from_server.txt
 fi
 if [ ! -f "~/storage/shared/vs2termux/run_server.txt" ]; then
 	echo "To run the server, run 'sh start.sh' if u made the script in the home folder.
