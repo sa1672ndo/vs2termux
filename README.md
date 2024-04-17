@@ -12,4 +12,4 @@ Tutorial on how to run this script:
 
 Here you can find the latest versions of the loaders:        
 [Fabric](https://fabricmc.net/develop/)   |   [Forge](https://files.minecraftforge.net/net/minecraftforge/forge/)            
-After the script install the server successfully, a new folder will be created in 'internal storage/vs2termux/' which will have usefull information about running the server and other stuff.
+After the script install the server successfully, a new folder will be created in 'internal storage/vs2termux/' which will have useful information about running the server and other stuff.
