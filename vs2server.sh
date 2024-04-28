@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ "$#" -ne 3 ]; then
         echo "Usage: $0 <fabric/forge> <minecraft_version> <loader_version>"
-        echo "Example: $0 fabric 1.20.4 0.15.9"
+        echo "Example: $0 fabric 1.20.1 0.15.10"
         exit 1
 fi
 SHELL=/data/data/com.termux/files/usr/bin/bash
@@ -48,7 +48,7 @@ echo "#!/usr/bin/env sh
 # Add custom JVM arguments to the user_jvm_args.txt
 # Add custom program arguments {such as nogui} to this file in the next line before the "$@" or
 #  pass them to this script directly 
-grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.20.1-47.2.23/unix_args.txt nogui"$@"" > "$HOME"/vs2server/instances/start.sh
+grun -s JAVA_HOME=$HOME/vs2server/runtimes/jdk* $HOME/vs2server/runtimes/jdk*/bin/java @user_jvm_args.txt @libraries/net/minecraftforge/forge/"$1"-"$2"/unix_args.txt nogui"$@"" > "$HOME"/vs2server/instances/start.sh
 echo "# Xmx and Xms set the maximum and minimum RAM usage, respectively.
 # They can take any number, followed by an M or a G.
 # M means Megabyte, G means Gigabyte.
@@ -275,7 +275,7 @@ if [ "$install" = "true" ]; then
         jarfile=forge-"$2"-"$3"-installer
 		java -jar $HOME/vs2server/instances/forge-"$2"-"$3"-installer.jar --installServer
 		rm run.sh
-		start_script_forge
+		start_script_forge $2 $3
 		echo "eula=true" > $HOME/vs2server/instances/eula.txt
 		;;
 	* )
