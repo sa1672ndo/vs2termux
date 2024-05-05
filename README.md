@@ -1,15 +1,10 @@
 # vs2termux
-A simple shell script that quickly setups a modded Minecraft Server utilizing Eclipse Temurin under Termux's glibc shim for Krunch Physics Engine                                                 
-Your phone must have at least 6 gb of ram. Don't run this script on phones with less memory if u don't want it to randomly freeze and crash.                  
-This script should only be run in termux and nowhere else.                                   
+i dont think this is even vs2termux anymore
 
-Tutorial on how to run this script:
-- [Install termux](https://github.com/termux/termux-app/releases/tag/v0.118.0)
-- Open termux
-- copy this command, paste it in termux and then run it.      
-`curl -s -O https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/vs2server.sh && bash vs2server.sh`
-- You should be able to figure out the rest from here.
-- After the script install the server successfully, a new folder will be created in 'internal storage/vs2termux/' which will have useful information about running the server and other stuff.
+anyways goals
 
-Here you can find the latest versions of the supported modloaders:        
-[Fabric](https://fabricmc.net/develop/)   |   [Forge](https://files.minecraftforge.net/net/minecraftforge/forge/)            
+- have a main script that installs the mc server, java and possibly glibc
+- have folders that contain forge and fabric options and startscripts
+- actually have comments this time
+- stop the functional programming when its not needed/can be simplified
+- a simple mod download script (needs to also be compstible with the poor iSH users waiting for SCL 4.00)
