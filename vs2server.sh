@@ -8,26 +8,7 @@ SHELL=/data/data/com.termux/files/usr/bin/bash
 echo "This script should only be run in termux"
 read -n1 -r -p "Press any key to continue..."
 clear
-#check if mc ver is not below 1.16.5
-version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
-if version_gt "1.16.5" "$2"; then
-    echo "Warning: This script was designed to run minecraft 1.16.5>."
-	echo "Older versions of minecraft WONT RUN because they only support java 16 or older, NOT java 21 which is automatically installed."
-	echo "If you want to host old minecraft server on ur phone, use any other script or set it up manually urself."
-	exit
-fi
 pkg install jq wget curl -y
-loader="$1"
-version="$2"
-url="https://api.modrinth.com/v2/project/valkyrien-skies/version?loaders=\[%22"$loader"%22\]&game_versions=\[%22"$version"%22\]"
-check="$(curl -s "$url" | jq '.[0]')"
-if [ -n "$check" ] && [ "$check" != "null" ]; then
-	echo "VS2 is available for this version of minecraft"
-else
-	clear
-	echo "Warning: This script was designed to run a minecraft server with valkyrien skies 2 installed, which isn't available for minecraft "$version"."
-	exit
-fi
 iferror() {
     if [ "$?" -ne 0 ]; then
         echo "Something went wrong, log saved to ~/.cache/vs2server.log"
