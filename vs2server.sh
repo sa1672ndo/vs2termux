@@ -12,7 +12,7 @@ clear
 pkg install jq wget curl -y
 iferror() {
     if [ "$?" -ne 0 ]; then
-        echo "Something went wrong, log saved to ~/.cache/vs2server.log"
+        echo "Something went wrong, log saved to /internal_storage/vs2termux/vs2server.log"
         exit 1
     fi
 }
@@ -167,6 +167,17 @@ install_mod() {
 }
 
 # ------------------------------------------------------------------------- #
+
+if [ ! -d "$HOME"/storage/shared ]; then
+	termux-setup-storage
+fi
+if [ ! -d "$HOME"/storage/shared/vs2termux ]; then
+	mkdir -p "$HOME"/storage/shared/vs2termux
+fi #this is needed to allow the script to create the log in the internal storage
+( # start of the tee command
+
+# ------------------------------------------------------------------------- #
+
 echo "Installing needed termux packages"
 pkg update -y
 pkg upgrade -y
@@ -189,7 +200,6 @@ if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 4 ]; then
 fi
 # ------------------------------------------------------------------------- #
 
-(
 echo Installing Minecraft "$2" "$1"-"$3"
 
 if [ "$1" = "forge" ]; then
@@ -351,4 +361,4 @@ if [ ! -f "~/storage/shared/vs2termux/exported_mods.txt" ]; then
 fi
 echo "Check 'internal storage/vs2termux/' folder for some information that u might find useful."
 
-) 2>&1 | tee "$HOME"/.cache/vs2server.log
+) 2>&1 | tee "$HOME"/storage/shared/vs2termux/vs2server.log
