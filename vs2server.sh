@@ -5,7 +5,8 @@ if [ "$#" -ne 3 ]; then
         exit 1
 fi
 SHELL=/data/data/com.termux/files/usr/bin/bash
-echo "This script should only be run in termux"
+echo "This script should only be run in the github version of termux and with BASH.
+Do not report any issues if you run it with sh or if you use the google play version of termux."
 read -n1 -r -p "Press any key to continue..."
 clear
 pkg install jq wget curl -y
@@ -65,7 +66,7 @@ else
             echo "Exiting script..."
             break
         elif [ -e "$name" ]; then
-            echo "Are you sure that you want to delete '$name'? [Y/n]"
+            echo "Are you sure that you want to delete '$name'? [y/N]"
             read -r dc
             case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
                 [yY])
@@ -80,7 +81,7 @@ else
         elif [ -n "$(ls | grep "$name")" ]; then
             # Autocomplete based on partial match
             autocomplete=$(ls | grep "$name" | head -n 1)
-            echo "Are you sure that you want to delete '$autocomplete'? [Y/n]"
+            echo "Are you sure that you want to delete '$autocomplete'? [y/N]"
             read -r dc
             case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
                 [yY])
@@ -174,7 +175,7 @@ pkg install glibc-runner patchelf-glibc coreutils-glibc tar coreutils patchelf p
 
 #Check the code on 6gb phone 
 if [ "$(free --giga | awk '/Mem:/ {print $2}')" -le 4 ]; then
-        echo "Your phone stinks, it might die if you continue with $(free --giga | awk '/Mem:/ {print $2}')GB of useable RAM. Continue? [Y/n]"
+        echo "Your phone stinks, it might die if you continue with $(free --giga | awk '/Mem:/ {print $2}')GB of useable RAM. Continue? [y/N]"
         read -r dc
         case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
         [yY])
@@ -200,7 +201,7 @@ if [ "$1" = "forge" ]; then
 fi
 
 if [ -d "$HOME"/vs2server/runtimes ]; then
-	echo "Another runtime already exists. Do you want to overwrite it with a new one?. [Y/n]"
+	echo "Another runtime already exists. Do you want to overwrite it with a new one?. [y/N]"
 	read -r dc
        case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	[yY])
@@ -223,7 +224,7 @@ iferror
 
 install=true
 if [ -d "$HOME"/vs2server/instances ]; then
-	echo "Another instance already exists. Proceeding will overwrite it which will delete all worlds, configs, and mods. Continue? [Y/n] "
+	echo "Another instance already exists. Proceeding will overwrite it which will delete all worlds, configs, and mods. Continue? [y/N] "
 	read -r dc
     case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	[yY])
@@ -265,7 +266,7 @@ if [ "$install" = "true" ]; then
 	esac
 fi
 
-read -p "Do you want to install Valkyrian Skies, Clockwork and Eureka? [Y/n] " dc
+read -p "Do you want to install Valkyrian Skies, Clockwork and Eureka? [y/N] " dc
 case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 [yY])
 	install_mod "$1" "$2" "eureka"
@@ -277,7 +278,7 @@ pwd=$(pwd)
 echo "server files are located in "$pwd""
 cd ~/
 if [ ! -f "~/start.sh" ]; then
-	read -p "Do you want to make a start script in your home directory? [Y/n] " dc
+	read -p "Do you want to make a start script in your home directory? [y/N] " dc
 	case "$(echo "$dc" | tr '[:upper:]' '[:lower:]')" in
 	[yY])
 		echo "cd "$HOME"/vs2server/instances/ 
