@@ -4,7 +4,7 @@ Your phone must have at least 6 gb of ram. Don't run this script on phones with 
 This script should only be run in termux and nowhere else.                                   
 
 Tutorial on how to run this script:
-- [Install termux](https://github.com/termux/termux-app/releases/tag/v0.118.0)
+- [Install the __Github__ version of termux](https://github.com/termux/termux-app/releases/tag/v0.118.0) (!!!__PLAYSTORE TERMUX WILL NOT WORK__!!!)
 - Open termux
 - copy this command, paste it in termux and then run it.      
 `curl -s -O https://raw.githubusercontent.com/sa1672ndo/vs2termux/main/vs2server.sh && bash vs2server.sh`
@@ -13,3 +13,4 @@ Tutorial on how to run this script:
 
 Here you can find the latest versions of the supported modloaders:        
 [Fabric](https://fabricmc.net/develop/)   |   [Forge](https://files.minecraftforge.net/net/minecraftforge/forge/)            
+
